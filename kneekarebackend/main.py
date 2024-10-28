@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from sqlmodel import SQLModel, create_engine, Field, Session, select
-from typing import Annotated, List, Optional
+from typing import List, Optional
 from datetime import datetime
 
 DATABASE_URL = "sqlite:///instance/kneekare.db"
