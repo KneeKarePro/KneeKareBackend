@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "kneekarebackend"
+version = "0.1.0"
+description = ""
+authors = ["Cole Rottenberg <cole.rottenberg@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pandas = "^2.2.3"
+fastapi = "^0.115.4"
+uvicorn = "^0.32.0"
+
+[tool.poetry.scripts]
+start = "kneekarebackend.main:start"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
