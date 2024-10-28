@@ -43,6 +43,7 @@ app.add_middleware(
   allow_headers=["*"],
 )
 
+# Use lifespans instead of on_event decorator
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
@@ -65,5 +66,6 @@ async def read_users():
         users = session.exec(select(User)).all()
         return users
 
+# Start the server using Poetry scripts
 def start():
     uvicorn.run("kneekarebackend.main:app", host="localhost", port=8000, reload=True)
