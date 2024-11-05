@@ -2,26 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from sqlmodel import SQLModel, create_engine, Field, Session, select
-from typing import List, Optional
-from datetime import datetime
-from kneekarebackend.routers.users import user_router, User
+from kneekarebackend.routers.users import user_router
+from kneekarebackend.database import create_db_and_tables
 
-DATABASE_URL = "sqlite:///instance/kneekare.db"
-engine = create_engine(DATABASE_URL, echo=True)
 
-    
-class KneeData(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id")
-    timestamp: datetime = Field(default_factory=datetime.now)
-    angle: float
-    rotation: float
-    
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
+# Create the FastAPI app
+app = FastAPI(title="KneeKare Backend", description="Backend for KneeKare application")
 
-app = FastAPI()
 app.include_router(user_router)
 
 # CORS
@@ -45,6 +32,8 @@ app.add_middleware(
 def on_startup():
     create_db_and_tables()
 
+
+# Health check endpoint
 @app.get("/health")
 async def health():
     return {"status": "ok"}
@@ -52,4 +41,9 @@ async def health():
 
 # Start the server using Poetry scripts
 def start():
+    """
+    Start the FastAPI server using the uvicorn server
+
+    :return: None
+    """
     uvicorn.run("kneekarebackend.main:app", host="localhost", port=8000, reload=True)
