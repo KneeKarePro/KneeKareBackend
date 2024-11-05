@@ -43,7 +43,11 @@ async def health():
 def start():
     """
     Start the FastAPI server using the uvicorn server
+    
+    - Args
+        None
 
-    :return: None
+    - Returns
+        None
     """
     uvicorn.run("kneekarebackend.main:app", host="localhost", port=8000, reload=True)
