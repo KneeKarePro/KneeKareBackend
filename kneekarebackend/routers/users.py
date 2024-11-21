@@ -2,6 +2,8 @@
 from fastapi import APIRouter
 from sqlmodel import Session, select, SQLModel, Field
 from typing import List, Optional
+from datetime import datetime
+import pandas as pd
 
 # Local Imports
 from kneekarebackend.models.user import User  # Import the User
@@ -90,7 +92,7 @@ async def read_user_knee_data(user_id: int):
 @user_router.post("/{user_id}/knee-data", response_model=KneeData)
 async def create_user_knee_data(user_id: int, knee_data: KneeData):
     """
-    Create knee data for a user
+    Create knee data for a user with pandas timestamp handling
 
     - Args
         user_id (int): The id of the user to create knee data for
@@ -100,7 +102,9 @@ async def create_user_knee_data(user_id: int, knee_data: KneeData):
         KneeData: The knee data that was created
     """
     with Session(engine) as session:
-        user = session.get(User, user_id)
+        # Convert timestamp to datetime if it's a pandas Timestamp
+        
+        knee_data.timestamp = datetime.fromtimestamp(knee_data.timestamp)
         knee_data.user_id = user_id
         session.add(knee_data)
         session.commit()
