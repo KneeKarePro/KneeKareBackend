@@ -1,6 +1,6 @@
 # Package Imports
-from fastapi import APIRouter
-from sqlmodel import Session, select, SQLModel, Field
+from fastapi import APIRouter, HTTPException
+from sqlmodel import Session, select, SQLModel, Field, delete
 from typing import List, Optional
 from datetime import datetime
 import pandas as pd
@@ -41,6 +41,9 @@ async def create_user(user: User):
 
     - Args
         user (User): The user to be created
+            - name (str): The name of the user
+            - password (str): The password of the user
+            - email (str): The email of the user
 
     - Returns
         User: The user that was created
@@ -161,3 +164,24 @@ async def create_user_knee_data_batch(user_id: int, knee_data_batch: List[KneeDa
                 session.commit()
         
         return results
+
+
+@user_router.delete("/{user_id}")
+async def delete_user(user_id: int):
+    """
+    Delete a user and all their knee data
+    """
+    with Session(engine) as session:
+        user = session.get(User, user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Delete all knee data first
+        session.exec(
+            delete(KneeData).where(KneeData.user_id == user_id)
+        )
+        
+        # Delete user
+        session.delete(user)
+        session.commit()
+        return {"message": f"User {user.name} and all their data deleted"}
