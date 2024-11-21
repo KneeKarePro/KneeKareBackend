@@ -92,21 +92,72 @@ async def read_user_knee_data(user_id: int):
 @user_router.post("/{user_id}/knee-data", response_model=KneeData)
 async def create_user_knee_data(user_id: int, knee_data: KneeData):
     """
-    Create knee data for a user with pandas timestamp handling
-
-    - Args
-        user_id (int): The id of the user to create knee data for
-        knee_data (KneeData): The knee data to be created
-
-    - Returns
-        KneeData: The knee data that was created
+    Create knee data for a user, preventing duplicates based on timestamp
     """
     with Session(engine) as session:
-        # Convert timestamp to datetime if it's a pandas Timestamp
+        # Convert timestamp to datetime
+        timestamp = datetime.fromtimestamp(knee_data.timestamp)
         
-        knee_data.timestamp = datetime.fromtimestamp(knee_data.timestamp)
+        # Check for existing entry
+        existing_data = session.exec(
+            select(KneeData)
+            .where(KneeData.user_id == user_id)
+            .where(KneeData.timestamp == timestamp)
+        ).first()
+        
+        if existing_data:
+            return existing_data
+            
+        # Create new entry if none exists
+        knee_data.timestamp = timestamp
         knee_data.user_id = user_id
         session.add(knee_data)
         session.commit()
         session.refresh(knee_data)
         return knee_data
+
+
+@user_router.post("/{user_id}/knee-data/batch", response_model=List[KneeData])
+async def create_user_knee_data_batch(user_id: int, knee_data_batch: List[KneeData]):
+    """
+    Create multiple knee data entries for a user in batch, preventing duplicates
+    """
+    with Session(engine) as session:
+        results = []
+        
+        # Process in chunks for memory efficiency
+        chunk_size = 1000
+        for i in range(0, len(knee_data_batch), chunk_size):
+            chunk = knee_data_batch[i:i + chunk_size]
+            
+            # Convert timestamps to datetime for the chunk
+            timestamps = [datetime.fromtimestamp(data.timestamp) for data in chunk]
+            
+            # Check existing entries in bulk
+            existing_data = session.exec(
+                select(KneeData)
+                .where(KneeData.user_id == user_id)
+                .where(KneeData.timestamp.in_(timestamps))
+            ).all()
+            
+            # Create dictionary of existing timestamps
+            existing_timestamps = {data.timestamp: data for data in existing_data}
+            
+            # Process new entries
+            new_entries = []
+            for data in chunk:
+                timestamp = datetime.fromtimestamp(data.timestamp)
+                if timestamp not in existing_timestamps:
+                    data.timestamp = timestamp
+                    data.user_id = user_id
+                    new_entries.append(data)
+                    results.append(data)
+                else:
+                    results.append(existing_timestamps[timestamp])
+            
+            # Bulk insert new entries
+            if new_entries:
+                session.add_all(new_entries)
+                session.commit()
+        
+        return results
