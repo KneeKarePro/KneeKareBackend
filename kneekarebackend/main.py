@@ -3,13 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from kneekarebackend.routers.users import user_router
+from kneekarebackend.routers.data import data_router
 from kneekarebackend.database import create_db_and_tables
 
 
 # Create the FastAPI app
-app = FastAPI(title="KneeKare Backend", description="Backend for KneeKare application")
+app = FastAPI(title="KneeKare Backend")
 
 app.include_router(user_router)
+app.include_router(data_router)
 
 # CORS
 origins = [
