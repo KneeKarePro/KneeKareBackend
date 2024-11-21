@@ -45,7 +45,7 @@ async def receive_data(username: str, angle: float, rotation: float):
         return {"message": "Data received"}
 
 @data_router.get("/{username}", response_model=List[KneeData])
-async def get_data(username: str, limit: int = 1000):
+async def get_data(username: str, limit: int = 100):
     with Session(engine) as session:
         user = session.exec(select(User).where(User.name == username)).first()
         if not user:
@@ -57,7 +57,10 @@ async def get_data(username: str, limit: int = 1000):
             .order_by(KneeData.timestamp.desc())
             .limit(limit)
         ).all()
-        return data[::-1]  # Reverse to get chronological order
+        print(len(data))
+        data = data[::-1]
+        # only return the limit number of data points
+        return data[:limit]
 
 @data_router.get("/range/{username}")
 async def get_data_range(
